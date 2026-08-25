@@ -42,6 +42,9 @@ On Vercel: create the project, add Neon + Blob, pull env with `vercel env pull .
 | `APP_BASE_URL` | Auth0 callback host |
 | `BOOTH_EVENT_SLUG` | Isolates Neon rows + Blob prefixes per event |
 | `AUTH0_*` | Operator login + Token Vault |
+| `ALLOWED_OPERATOR_EMAILS` | **Required.** Comma-separated emails that may open `/admin` and persist the Token Vault operator. Empty means **nobody** is admin — not “any login.” |
+| `AUTH0_OPERATOR_ROLE` | Optional Auth0 RBAC role that also counts as operator. Ignored if unset. |
+| `AUTH0_ROLES_CLAIM` | Optional ID-token claim for that role (default `roles`) |
 | `AUTH0_GITHUB_CONNECTION` | Token Vault **connection name** (`github` unless you renamed it) |
 | `DATABASE_URL` | Neon |
 | `BLOB_READ_WRITE_TOKEN` | Drawings, videos, optional header |
@@ -67,7 +70,9 @@ Connect path used by `/admin`:
 
 `/auth/connect?connection={AUTH0_GITHUB_CONNECTION}&returnTo=/admin`
 
-The SDK is constructed with `enableConnectAccountEndpoint: true`. Posts call `getAccessTokenForConnection({ connection })` using that **name**. Kiosk submits have no operator cookie, so the kit also stores the operator refresh token in `booth_settings` (not wiped) and exchanges it with Token Vault.
+The SDK is constructed with `enableConnectAccountEndpoint: true`. Posts call `getAccessTokenForConnection({ connection })` using that **name**. Kiosk submits have no operator cookie, so the kit stores the **allowlisted** operator refresh token in `booth_settings` (AES-GCM with `AUTH0_SECRET`, not wiped) and exchanges it with Token Vault.
+
+`onCallback` will **not** persist a random Auth0 login. `persistOperatorFromSession` only writes when the user is allowlisted (or has `AUTH0_OPERATOR_ROLE`), and it will not overwrite an existing `operatorSub` unless that incoming user already *is* the stored operator.
 
 ### 3. GitHub gallery repo
 
@@ -79,7 +84,9 @@ Default model is `spacexai/grok-imagine-video` through the Vercel AI Gateway. Dr
 
 ## How to run a booth
 
-1. Open `/admin` on your phone or laptop. Log in as Focus (stable primary login).
+Set `ALLOWED_OPERATOR_EMAILS` to Focus’s email before the show. An empty value locks `/admin`.
+
+1. Open `/admin` on your phone or laptop. Log in as Focus (stable primary login). Only that allowlisted account becomes the GitHub issuer.
 2. Destination card → **Connect GitHub** if it says Not connected.
 3. Look card → drop a header or leave the Focus Otter default.
 4. Point the kiosk tablet at `/draw`. Attendees do not log in. Handle is optional.
