@@ -27,12 +27,23 @@ export function toPublicAnimal(animal: Animal): PublicAnimal {
   };
 }
 
-export function isPendingStatus(status: AnimalStatus) {
-  return (
+export function isPendingStatus(
+  status: AnimalStatus,
+  animal?: Pick<PublicAnimal, "errorMessage" | "issueUrl">,
+) {
+  if (
     status === "queued" ||
     status === "generating_video" ||
     status === "posting"
-  );
+  ) {
+    return true;
+  }
+  // `ready` is terminal only after GitHub is skipped or otherwise settled.
+  // A bare ready (video saved, post not finished) must keep polling.
+  if (status === "ready") {
+    return !animal?.errorMessage && !animal?.issueUrl;
+  }
+  return false;
 }
 
 export function statusLabel(status: AnimalStatus) {

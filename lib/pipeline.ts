@@ -33,7 +33,6 @@ export async function processAnimal(animalId: string) {
       await updateAnimal(animalId, {
         videoUrl,
         videoBlobPathname,
-        status: "ready",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Video generation failed";

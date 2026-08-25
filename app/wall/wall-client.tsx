@@ -19,7 +19,9 @@ export default function WallClient({
   const [animals, setAnimals] = useState(initialAnimals);
 
   useEffect(() => {
-    const pending = animals.some((animal) => isPendingStatus(animal.status));
+    const pending = animals.some((animal) =>
+      isPendingStatus(animal.status, animal),
+    );
     if (!pending) return;
 
     const timer = window.setInterval(async () => {
