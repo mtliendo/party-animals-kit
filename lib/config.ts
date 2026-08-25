@@ -34,13 +34,6 @@ export function getVideoModel() {
   return process.env.VIDEO_MODEL?.trim() || "spacexai/grok-imagine-video";
 }
 
-export function getAllowedOperatorEmails() {
-  return (process.env.ALLOWED_OPERATOR_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export function animalsBlobPrefix(eventSlug = getEventSlug()) {
   return `events/${eventSlug}/animals/`;
 }

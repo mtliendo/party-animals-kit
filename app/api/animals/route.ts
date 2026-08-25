@@ -4,6 +4,7 @@ import { createAnimal, listAnimals, updateAnimal } from "@/lib/db/queries";
 import { toPublicAnimal } from "@/lib/animals";
 import { uploadPublicBlob } from "@/lib/blob";
 import { processAnimal } from "@/lib/pipeline";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 300;
 
@@ -18,6 +19,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!rateLimit(`animals:${clientKey(request)}`, 12, 60_000)) {
+    return Response.json(
+      { error: "Give the kiosk a second — too many submits from this device." },
+      { status: 429 },
+    );
+  }
+
   try {
     let formData: FormData;
     try {
