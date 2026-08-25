@@ -8,7 +8,9 @@ export default function AdminForbiddenPage() {
         Not this login
       </h1>
       <p className="max-w-md text-muted-foreground">
-        This booth only lets the operator open /admin. Attendees do not log in.
+        /admin is closed unless <code>ALLOWED_OPERATOR_EMAILS</code> lists this
+        account, or the session has <code>AUTH0_OPERATOR_ROLE</code>. An empty
+        allowlist is not an open floor. Attendees do not log in.
       </p>
       <a href="/auth/logout" className="btn-ghost-booth">
         Logout

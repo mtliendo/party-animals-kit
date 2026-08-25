@@ -1,6 +1,11 @@
 import { auth0 } from "@/lib/auth0";
 import { getDestinationConnection } from "@/lib/config";
-import { ensureBoothSettings, updateBoothSettings } from "@/lib/db/queries";
+import { ensureBoothSettings } from "@/lib/db/queries";
+import { isAllowedOperator } from "@/lib/operator-access";
+import {
+  readStoredOperatorRefreshToken,
+  writeStoredOperatorRefreshToken,
+} from "@/lib/operator-session";
 
 type ConnectionToken = {
   token: string;
@@ -10,17 +15,27 @@ type ConnectionToken = {
 export async function getOperatorConnectionToken(
   connection = getDestinationConnection(),
 ): Promise<ConnectionToken | null> {
-  try {
-    const fromSession = await auth0.getAccessTokenForConnection({ connection });
-    if (fromSession.token) {
-      return fromSession;
+  const settings = await ensureBoothSettings();
+  const session = await auth0.getSession();
+  const sessionUser = session?.user;
+  const sessionSub = sessionUser?.sub;
+  const sessionIsStoredOperator =
+    Boolean(sessionSub) &&
+    isAllowedOperator(sessionUser) &&
+    (!settings.operatorSub || settings.operatorSub === sessionSub);
+
+  if (sessionIsStoredOperator) {
+    try {
+      const fromSession = await auth0.getAccessTokenForConnection({ connection });
+      if (fromSession.token) {
+        return fromSession;
+      }
+    } catch {
+      // Fall through to the stored operator refresh token.
     }
-  } catch {
-    // Kiosk submits have no operator cookie. Fall through to the stored refresh token.
   }
 
-  const settings = await ensureBoothSettings();
-  const refreshToken = settings.operatorRefreshToken;
+  const refreshToken = await readStoredOperatorRefreshToken();
   if (!refreshToken) {
     return null;
   }
@@ -82,7 +97,7 @@ async function exchangeRefreshTokenForConnection(
   }
 
   if (payload.refresh_token) {
-    await updateBoothSettings({ operatorRefreshToken: payload.refresh_token });
+    await writeStoredOperatorRefreshToken(payload.refresh_token);
   }
 
   return {

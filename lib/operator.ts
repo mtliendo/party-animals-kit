@@ -1,13 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth0 } from "@/lib/auth0";
-import { getAllowedOperatorEmails } from "@/lib/config";
+import { isAllowedOperator, isOperatorGateConfigured } from "@/lib/operator-access";
 import { persistOperatorFromSession } from "@/lib/operator-session";
-
-function isAllowedOperator(email?: string | null) {
-  const allowed = getAllowedOperatorEmails();
-  if (allowed.length === 0) return true;
-  return Boolean(email && allowed.includes(email.toLowerCase()));
-}
 
 export async function requireOperator() {
   const session = await auth0.getSession();
@@ -15,7 +9,7 @@ export async function requireOperator() {
     redirect("/auth/login?returnTo=/admin");
   }
 
-  if (!isAllowedOperator(session.user.email)) {
+  if (!isOperatorGateConfigured() || !isAllowedOperator(session.user)) {
     redirect("/admin/forbidden");
   }
 
@@ -33,7 +27,7 @@ export async function requireOperatorApi() {
   if (!session) {
     return { session: null, error: Response.json({ error: "Unauthorized" }, { status: 401 }) };
   }
-  if (!isAllowedOperator(session.user.email)) {
+  if (!isOperatorGateConfigured() || !isAllowedOperator(session.user)) {
     return { session: null, error: Response.json({ error: "Forbidden" }, { status: 403 }) };
   }
   try {
