@@ -33,6 +33,8 @@ pnpm db:push
 pnpm dev
 ```
 
+Landing, draw, and wall stay up even before Auth0 env is set. `/admin` returns 503 until the `AUTH0_*` variables exist.
+
 On Vercel: create the project, add Neon + Blob, pull env with `vercel env pull .env.local --yes`.
 
 | Variable | Why |

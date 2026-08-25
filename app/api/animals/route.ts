@@ -19,7 +19,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return Response.json({ error: "Draw something first." }, { status: 400 });
+    }
     const image = formData.get("image");
     const handleValue = formData.get("handle");
 

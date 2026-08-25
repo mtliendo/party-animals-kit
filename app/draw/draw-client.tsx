@@ -79,7 +79,15 @@ export default function DrawClient() {
   }
 
   if (state.type === "success") {
-    return <YoureIn handle={handle} />;
+    return (
+      <YoureIn
+        handle={handle}
+        onDrawAnother={() => {
+          setHandle("");
+          setState({ type: "idle" });
+        }}
+      />
+    );
   }
 
   return (
@@ -151,7 +159,13 @@ export default function DrawClient() {
   );
 }
 
-function YoureIn({ handle }: { handle: string }) {
+function YoureIn({
+  handle,
+  onDrawAnother,
+}: {
+  handle: string;
+  onDrawAnother: () => void;
+}) {
   return (
     <div className="min-h-dvh flex flex-col">
       <SiteNav current="draw" />
@@ -171,9 +185,9 @@ function YoureIn({ handle }: { handle: string }) {
           <Link href="/wall" className="btn-booth">
             See the wall
           </Link>
-          <Link href="/draw" className="btn-ghost-booth">
+          <button type="button" className="btn-ghost-booth" onClick={onDrawAnother}>
             Draw another
-          </Link>
+          </button>
         </div>
       </main>
     </div>
